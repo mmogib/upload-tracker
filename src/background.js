@@ -8,6 +8,7 @@ import {
 
 import Datastore from 'nedb'
 import path from 'path'
+import { getFilePaths, getFileProps } from './utilfns'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
@@ -31,7 +32,7 @@ function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
     width: 960,
-    height: 1000,
+    height: 700,
     webPreferences: {
       nodeIntegration: true
     }
@@ -100,19 +101,29 @@ if (isDevelopment) {
   }
 }
 
-ipc.on('new-file', (e, file) => {
-  console.log('saving...', file)
-  db.insert(file, (err, doc) => {
-    if (!err) {
-      e.sender.send('file-saved')
+ipc.on('new-folder', (e, file) => {
+  const paths = getFilePaths(file.path)
+  const files = paths.map(v => getFileProps(v))
+  db.update(
+    { folder: file.path },
+    { folder: file.path, files },
+    {
+      upsert: true
+    },
+    (err, _, docs) => {
+      if (!err) {
+        // e.sender.send('got-files', docs)
+      }
     }
-  })
+  )
 })
 
-ipc.on('get-files', e => {
-  db.find({}, (err, docs) => {
-    if (!err) {
-      e.sender.send('got-files', docs)
-    }
-  })
+ipc.on('get-last-folder', e => {
+  db.findOne({})
+    .sort({ updatedAt: -1 })
+    .exec((err, docs) => {
+      if (!err) {
+        e.sender.send('got-folder', docs)
+      }
+    })
 })

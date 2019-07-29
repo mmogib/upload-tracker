@@ -8,14 +8,18 @@
       </v-flex>
       <v-flex xs12>
         <v-file-input
-          v-model="file"
-          placeholder="Select your files"
+          v-model="folder"
+          webkitdirectory
+          multiple
+          placeholder="Select your folder"
           prepend-icon="mdi-paperclip"
           :display-size="1000"
           color="deep-purple accent-4"
           label="File input"
           @change="uploadFile"
         ></v-file-input>
+        <h5>Folder:</h5>
+        <span>{{folderName}}</span>
       </v-flex>
     </v-layout>
   </v-container>
@@ -25,21 +29,27 @@
 import { mapActions } from "vuex"
 export default {
   data: () => ({
-    file: []
+    folder: []
   }),
+  computed: {
+    folderName() {
+      return this.$store.state.folder.folder || ""
+    }
+  },
   methods: {
-    ...mapActions({ addFile: "ADD_FILE" }),
+    ...mapActions({ addFolder: "ADD_FOLDER" }),
     uploadFile(file) {
-      if (file) {
-        const { name, path } = file
+      if (file.length > 0) {
+        const { name, path } = file[0]
+        this.folderName = path
         const date = new Date().toISOString()
-        const newfile = {
+        const newFolder = {
           id: `${name}-${date}`,
           date,
           name,
           path
         }
-        this.addFile(newfile)
+        this.addFolder(newFolder)
       }
     }
   }

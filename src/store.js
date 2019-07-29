@@ -6,31 +6,22 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    files: []
+    folder: []
   },
   mutations: {
-    setFiles: (state, payload) => {
-      state.files = [...payload]
-    },
-    addFile: (state, payload) => {
-      state.files = [...state.files, payload]
+    setFolder: (state, payload) => {
+      state.folder = { ...payload }
     }
   },
   actions: {
     APP_INIT: ({ commit }) => {
-      ipc.send('get-files')
-      ipc.on('file-saved', () => {
-        console.log('file saved in bg')
-      })
-      ipc.on('got-files', (e, files) => {
-        commit('setFiles', files)
+      ipc.send('get-last-folder')
+      ipc.on('got-folder', (e, folder) => {
+        commit('setFolder', folder)
       })
     },
-    ADD_FILE: ({ state, commit }, payload) => {
-      if (state.files.filter(v => v.name === payload.name).length === 0) {
-        ipc.send('new-file', payload)
-        commit('addFile', payload)
-      }
+    ADD_FOLDER: (_, payload) => {
+      ipc.send('new-folder', payload)
     }
   }
 })
