@@ -1,8 +1,6 @@
 <template>
   <v-container>
     <v-layout text-center wrap>
-      <v-flex xs12></v-flex>
-
       <v-flex xs12 mb-4>
         <h1 class="display-2 font-weight-bold mb-3">Tracking File Uploads</h1>
       </v-flex>
@@ -10,7 +8,6 @@
         <v-file-input
           v-model="folder"
           webkitdirectory
-          multiple
           placeholder="Select your folder"
           prepend-icon="mdi-paperclip"
           :display-size="1000"
@@ -18,8 +15,15 @@
           label="File input"
           @change="uploadFile"
         ></v-file-input>
+      </v-flex>
+      <v-flex xs12>
         <h5>Folder:</h5>
         <span>{{folderName}}</span>
+      </v-flex>
+      <v-flex xs12>
+        <div class="text-center">
+          <v-btn rounded color="primary" dark>Upload</v-btn>
+        </div>
       </v-flex>
     </v-layout>
   </v-container>
@@ -39,9 +43,9 @@ export default {
   methods: {
     ...mapActions({ addFolder: "ADD_FOLDER" }),
     uploadFile(file) {
-      if (file.length > 0) {
-        const { name, path } = file[0]
-        this.folderName = path
+      if (file) {
+        const { name, path } = file
+
         const date = new Date().toISOString()
         const newFolder = {
           id: `${name}-${date}`,
@@ -50,6 +54,8 @@ export default {
           path
         }
         this.addFolder(newFolder)
+      } else {
+        this.$store.dispatch("RESET_FOLDER")
       }
     }
   }

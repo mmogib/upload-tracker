@@ -28,7 +28,9 @@ export const getFileProps = filePath => {
     name,
     ext,
     size,
-    data: {}
+    data: {
+      status: 'Active'
+    }
   }
 }
 

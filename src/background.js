@@ -110,9 +110,9 @@ ipc.on('new-folder', (e, file) => {
     {
       upsert: true
     },
-    (err, _, docs) => {
+    err => {
       if (!err) {
-        // e.sender.send('got-files', docs)
+        e.sender.send('folder-saved')
       }
     }
   )
@@ -124,6 +124,8 @@ ipc.on('get-last-folder', e => {
     .exec((err, docs) => {
       if (!err) {
         e.sender.send('got-folder', docs)
+      } else {
+        console.log('err', err)
       }
     })
 })
