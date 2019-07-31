@@ -20,11 +20,6 @@
         <h5>Folder:</h5>
         <span>{{folderName}}</span>
       </v-flex>
-      <v-flex xs12>
-        <div class="text-center">
-          <v-btn rounded color="primary" dark>Upload</v-btn>
-        </div>
-      </v-flex>
     </v-layout>
   </v-container>
 </template>

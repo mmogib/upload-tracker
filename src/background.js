@@ -1,12 +1,14 @@
 'use strict'
 
-import { app, protocol, BrowserWindow, ipcMain as ipc } from 'electron'
+import { app, protocol, BrowserWindow, ipcMain as ipc, dialog } from 'electron'
 import {
   createProtocol,
   installVueDevtools
 } from 'vue-cli-plugin-electron-builder/lib'
 
 import Datastore from 'nedb'
+import axios from 'axios'
+import fs from 'fs'
 import path from 'path'
 import { getFilePaths, getFileProps } from './utilfns'
 
@@ -82,7 +84,6 @@ app.on('ready', async () => {
       console.error('Vue Devtools failed to install:', e.toString())
     }
   }
-
   createWindow()
 })
 
@@ -105,10 +106,64 @@ ipc.on('new-folder', (e, file) => {
   const paths = getFilePaths(file.path)
   const files = paths.map(v => getFileProps(v))
   db.update(
-    { folder: file.path },
-    { folder: file.path, files },
+    { id: 'lastFolder' },
+    { $set: { id: 'lastFolder', folder: file.path, type: 'info' } },
     {
       upsert: true
+    },
+    err => {
+      if (err) {
+        showError(err)
+      } else {
+        db.findOne({ folder: file.path, type: 'data' }).exec((err, docs) => {
+          if (!err) {
+            if (!docs) {
+              db.insert({ folder: file.path, files, type: 'data' }, err => {
+                if (!err) {
+                  e.sender.send('folder-saved')
+                }
+              })
+            } else {
+              e.sender.send('got-folder', docs)
+            }
+          } else {
+            showError(err)
+          }
+        })
+      }
+    }
+  )
+})
+
+ipc.on('get-last-folder', e => {
+  db.findOne({ id: 'lastFolder' }).exec((err, lastFolder) => {
+    if (!err) {
+      if (lastFolder) {
+        db.findOne({ folder: lastFolder.folder, type: 'data' }).exec(
+          (error, docs) => {
+            if (!error) {
+              e.sender.send('got-folder', docs)
+            } else {
+              showError(error)
+            }
+          }
+        )
+      } else {
+        e.sender.send('got-folder', {})
+      }
+      //e.sender.send('got-folder', docs)
+    } else {
+      showError(err)
+    }
+  })
+})
+
+ipc.on('update-file', (e, { id, files }) => {
+  db.update(
+    { _id: id },
+    { $set: { files: files } },
+    {
+      upsert: false
     },
     err => {
       if (!err) {
@@ -118,14 +173,41 @@ ipc.on('new-folder', (e, file) => {
   )
 })
 
-ipc.on('get-last-folder', e => {
-  db.findOne({})
-    .sort({ updatedAt: -1 })
-    .exec((err, docs) => {
-      if (!err) {
-        e.sender.send('got-folder', docs)
-      } else {
-        console.log('err', err)
+ipc.on('upload-file', (e, file) => {
+  axios
+    .post(
+      'https://content.dropboxapi.com/2/files/upload',
+      fs.readFileSync(file.filePath),
+      {
+        headers: {
+          Authorization:
+            'Bearer ROmm0uk_Gq0AAAAAAABGOjKDxqw4z00UqarPqreEOZ5x-_5J4NuNXeNLFlHiKVvw',
+          'Content-Type': 'application/octet-stream',
+          'Dropbox-API-Arg': JSON.stringify({
+            path: `/${file.name}`,
+            mode: 'add',
+            autorename: true,
+            mute: false,
+            strict_conflict: false
+          })
+        }
       }
-    })
+    )
+    .then(res => e.sender.send('upload-finished'))
+    .catch(err => showError(err))
 })
+
+const showError = err => {
+  dialog.showMessageBox(win, {
+    title: 'Error Message',
+    type: 'error',
+    buttons: [],
+    message: err
+  })
+}
+
+/*
+git fetch origin
+git reset --hard origin/master
+
+*/

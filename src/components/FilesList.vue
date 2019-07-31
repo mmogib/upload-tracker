@@ -11,13 +11,26 @@
         hide-details
       ></v-text-field>
     </v-card-title>
+
+    <div class="text-right mr-4">
+      <v-btn
+        rounded
+        :disabled="selected.length===0"
+        color="primary"
+        @click="uploadItem(selected[0])"
+      >Upload</v-btn>
+    </div>
     <v-data-table
       v-model="selected"
       :headers="headers"
       :items="files"
+      :single-select="true"
+      :expanded.sync="expanded"
       :search="search"
       item-key="name"
       show-select
+      show-expand
+      @item-selected="itemSelected"
       class="elevation-1"
       :loading="loading"
       loading-text="Loading... Please wait"
@@ -27,7 +40,7 @@
           <v-dialog v-model="dialog" max-width="500px">
             <v-card>
               <v-card-title>
-                <span class="headline">Some Title</span>
+                <span class="headline">Edit</span>
               </v-card-title>
 
               <v-card-text>
@@ -38,7 +51,7 @@
                     </v-flex>
 
                     <v-flex xs12 sm6 md4>
-                      <v-text-field v-model="editedItem.status" label="Status"></v-text-field>
+                      <v-text-field v-model="editedItem.data.status" label="Status"></v-text-field>
                     </v-flex>
                   </v-layout>
                 </v-container>
@@ -55,17 +68,36 @@
       </template>
       <template v-slot:item.action="{ item }">
         <v-icon small class="mr-2" @click="editItem(item)">mdi-pencil</v-icon>
-        <v-icon small @click="deleteItem(item)">mdi-delete</v-icon>
+        <v-icon small @click="uploadItem(item)">mdi-upload</v-icon>
+      </template>
+      <template v-slot:expanded-item="{ files, headers }">
+        <td>Path:</td>
+        <td :colspan="headers.length-1">{{expanded[0] && expanded[0].filePath}}</td>
+      </template>
+
+      <template v-slot:item.data.status="{ item }">
+        <span v-if="item.data.status==='uploaded'" class="success--text">
+          <v-icon small class="mr-1">mdi-check</v-icon>
+          {{item.data.status}}
+        </span>
+        <span v-if="item.data.status==='uploading'" class="red--text">
+          <v-progress-linear indeterminate color="deep-purple accent-4"></v-progress-linear>
+          {{item.data.status}}...
+        </span>
+        <span v-if="item.data.status==='Not Uploaded'">{{item.data.status}}</span>
       </template>
     </v-data-table>
   </v-card>
 </template>
 
 <script>
+import { ipcRenderer as ipc } from "electron"
 export default {
   data() {
     return {
       selected: [],
+      expanded: [],
+      uploading: false,
       dialog: false,
       search: "",
       headers: [
@@ -75,25 +107,26 @@ export default {
           sortable: true,
           value: "name"
         },
-        //{ text: "Path", value: "filePath" },
         { text: "Size", value: "size" },
         { text: "Status", value: "data.status" },
         { text: "Actions", value: "action", sortable: false }
       ],
-      editedIndex: -1,
       editedItem: {
         name: "",
         size: 0,
-        status: ""
+        data: { status: "" }
       },
       defaultItem: {
         name: "",
         size: 0,
-        status: ""
+        data: { status: "" }
       }
     }
   },
   computed: {
+    folder() {
+      return this.$store.state.folder
+    },
     files() {
       return this.$store.getters.files
     },
@@ -105,11 +138,22 @@ export default {
     initialize() {
       console.log("initilizing...")
     },
+    itemSelected(item) {
+      //console.log(item)
+    },
+
+    uploadItem(item) {
+      this.updateFileState({ ...item, data: { status: "uploading" } })
+      this.uploading = true
+      ipc.send("upload-file", item)
+    },
     editItem(item) {
-      this.editedIndex = this.files.indexOf(item)
-      this.editedItem = Object.assign({}, { ...item, status: item.data.status })
+      const selectedFile = this.files.filter(
+        v => v.folderPath === item.folderPath && v.name === item.name
+      )
+
+      this.editedItem = { ...selectedFile[0] }
       this.dialog = true
-      console.log(this.editedIndex)
     },
     deleteItem(item) {
       console.log("deleting ", item)
@@ -118,10 +162,25 @@ export default {
       this.dialog = false
       setTimeout(() => {
         this.editedItem = Object.assign({}, this.defaultItem)
-        this.editedIndex = -1
       }, 300)
     },
+    updateFileState(file) {
+      const folder = this.folder
+      const files = this.files.map(v => {
+        if (v.id === file.id) {
+          return file
+        } else {
+          return v
+        }
+      })
+      this.$store.dispatch("UPDATE_FILE", {
+        id: folder._id,
+        files
+      })
+    },
     save() {
+      const file = this.editedItem
+      this.updateFileState(file)
       this.close()
     }
   },
@@ -129,6 +188,15 @@ export default {
     dialog(val) {
       val || this.close()
     }
+  },
+  created() {
+    ipc.on("upload-finished", () => {
+      this.uploading = false
+      this.updateFileState({
+        ...this.selected[0],
+        data: { status: "uploaded" }
+      })
+    })
   }
 }
 </script>

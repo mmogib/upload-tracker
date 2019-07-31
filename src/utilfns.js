@@ -24,12 +24,13 @@ export const getFileProps = filePath => {
   const ext = path.extname(filePath)
   const size = formatBytes(fs.statSync(filePath).size)
   return {
+    id: new String(filePath).replace(/\\/g, '-') + '-' + name,
     filePath,
     name,
     ext,
     size,
     data: {
-      status: 'Active'
+      status: 'Not Uploaded'
     }
   }
 }

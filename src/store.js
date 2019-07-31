@@ -43,6 +43,9 @@ export default new Vuex.Store({
     },
     RESET_FOLDER: ({ commit }) => {
       commit('setFolder', defaultFolder)
+    },
+    UPDATE_FILE: (_, payload) => {
+      ipc.send('update-file', payload)
     }
   }
 })
