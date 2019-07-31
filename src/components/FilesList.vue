@@ -11,15 +11,22 @@
         hide-details
       ></v-text-field>
     </v-card-title>
-
-    <div class="text-right mr-4">
-      <v-btn
-        rounded
-        :disabled="selected.length===0"
-        color="primary"
-        @click="uploadItem(selected[0])"
-      >Upload</v-btn>
-    </div>
+    <v-layout wrap>
+      <v-flex xs6 offset-xs6>
+        <div class="text-right mr-4 mt-5">
+          <v-btn
+            rounded
+            block
+            :disabled="selected.length===0"
+            color="primary"
+            @click="uploadItem(selected[0])"
+          >
+            Upload
+            <v-icon small class="ml-2">mdi-upload</v-icon>
+          </v-btn>
+        </div>
+      </v-flex>
+    </v-layout>
     <v-data-table
       v-model="selected"
       :headers="headers"
@@ -68,7 +75,6 @@
       </template>
       <template v-slot:item.action="{ item }">
         <v-icon small class="mr-2" @click="editItem(item)">mdi-pencil</v-icon>
-        <v-icon small @click="uploadItem(item)">mdi-upload</v-icon>
       </template>
       <template v-slot:expanded-item="{ files, headers }">
         <td>Path:</td>
