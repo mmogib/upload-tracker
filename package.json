@@ -1,6 +1,6 @@
 {
   "name": "upload-tracker",
-  "version": "0.1.4-alpha",
+  "version": "0.1.7-alpha",
   "private": true,
   "description": "This is an application that uploads files to a sharepoint server.",
   "author": "Omar Alshaharni",

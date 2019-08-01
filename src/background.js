@@ -188,7 +188,7 @@ ipc.on('upload-file', (e, file) => {
       fs.readFileSync(file.filePath),
       {
         headers: {
-          Authorization: `Bearer ${process.env.DBX_TOKEN}`,
+          Authorization: `Bearer ${process.env.VUE_APP_DBX_TOKEN}`,
           'Content-Type': 'application/octet-stream',
           'Dropbox-API-Arg': JSON.stringify({
             path: `/${file.name}`,
