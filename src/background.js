@@ -201,7 +201,7 @@ ipc.on('upload-file', (e, file) => {
       }
     )
     .then(res => e.sender.send('upload-finished'))
-    .catch(err => showError(process.env.DBX_TOKEN))
+    .catch(err => showError(err.message))
 })
 
 const showError = err => {
