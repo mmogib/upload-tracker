@@ -1,6 +1,13 @@
 'use strict'
 
-import { app, protocol, BrowserWindow, ipcMain as ipc, dialog } from 'electron'
+import {
+  app,
+  protocol,
+  BrowserWindow,
+  ipcMain as ipc,
+  dialog,
+  Menu
+} from 'electron'
 import {
   createProtocol,
   installVueDevtools
@@ -11,7 +18,7 @@ import axios from 'axios'
 import fs from 'fs'
 import path from 'path'
 import { getFilePaths, getFileProps } from './utilfns'
-
+import { menu } from './menu'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -85,6 +92,7 @@ app.on('ready', async () => {
     }
   }
   createWindow()
+  Menu.setApplicationMenu(menu)
 })
 
 // Exit cleanly on request from parent process in development mode.
@@ -180,8 +188,7 @@ ipc.on('upload-file', (e, file) => {
       fs.readFileSync(file.filePath),
       {
         headers: {
-          Authorization:
-            'Bearer ROmm0uk_Gq0AAAAAAABGOjKDxqw4z00UqarPqreEOZ5x-_5J4NuNXeNLFlHiKVvw',
+          Authorization: `Bearer ${process.env.DBX_TOKEN}`,
           'Content-Type': 'application/octet-stream',
           'Dropbox-API-Arg': JSON.stringify({
             path: `/${file.name}`,
@@ -194,7 +201,7 @@ ipc.on('upload-file', (e, file) => {
       }
     )
     .then(res => e.sender.send('upload-finished'))
-    .catch(err => showError(err))
+    .catch(err => showError(process.env.DBX_TOKEN))
 })
 
 const showError = err => {

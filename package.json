@@ -1,11 +1,17 @@
 {
   "name": "upload-tracker",
-  "version": "0.1.0",
+  "version": "0.1.4-alpha",
   "private": true,
+  "description": "This is an application that uploads files to a sharepoint server.",
+  "author": "Omar Alshaharni",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mmogib/upload-tracker.git"
+  },
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "electron:build": "vue-cli-service electron:build",
+    "electron:build": "vue-cli-service electron:build -p always",
     "electron:serve": "vue-cli-service electron:serve",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps"
